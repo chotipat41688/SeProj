@@ -47,19 +47,22 @@ def check(list):
     else: return 1
 
 def getSumOffer(list):
-    try:
-        # sum = float(list[0]+list[1]+list[2]+list[3]+list[4])
-        Sum = float(list[0] + list[1] + list[2] + list[3] + list[4])
-        # list0=format(list[0]/sum,'.2f')
-        Avg = Sum/5
-        list0 = int(list[0] / Avg * 100)
-        list1 = int(list[1] / Avg * 100)
-        list2 = int(list[2] / Avg * 100)
-        list3 = int(list[3] / Avg * 100)
-        list4 = int(list[4] / Avg * 100)
-        return Sum,list0,list1,list2,list3,list4
-    except ZeroDivisionError:
-        print Sum,list[0],list[1],list[2],list[3],list[4] #1101
+    # sum = float(list[0]+list[1]+list[2]+list[3]+list[4])
+    Sum = float(list[0] + list[1] + list[2] + list[3] + list[4])
+    # list0=format(list[0]/sum,'.2f')
+    Avg = Sum/5
+    list0 = int(list[0] / Avg * 100)
+    list1 = int(list[1] / Avg * 100)
+    list2 = int(list[2] / Avg * 100)
+    list3 = int(list[3] / Avg * 100)
+    list4 = int(list[4] / Avg * 100)
+    return Sum,list0,list1,list2,list3,list4
+
+
+def getSumVol(list):
+    Sum = float(list[0] + list[1] + list[2] + list[3] + list[4])
+    return Sum
+
 
 
 
@@ -80,19 +83,19 @@ def getDate(Date):
 
 tempBid = ",,,,,,,,,"
 tempOffer = ",,,,,,,,,"
-def toTemp(string,eve):
+def toTemp(price,eve):
     global tempBid,tempOffer
     if eve == 1:
-        tempBid = string
-        return string+","+tempOffer
+        tempBid = price
+        return price+","+tempOffer
     else:
-        tempOffer = string
-        return tempBid+","+string
+        tempOffer = price
+        return tempBid+","+price
 
 
 
 import json
-items= ["2016-12-09_FANCY_30"]
+items= ["2016-12-08_FANCY_30","2016-12-09_FANCY_30"]
 # items = ["2016-10-17","2016-10-18","2016-10-19","2016-10-20"]
 
 
@@ -108,7 +111,7 @@ for Date in items:
 
     YYYY,MM,DD = getDate(Date)
 
-    with open("INPUT\\" +Date+".dat") as f, open("TESTWRITE\\FANCY" + items[0] + "to" + items[-1] + ".csv", "a") as output:         ## One file Many Day
+    with open("INPUT\\" +Date+".dat") as f, open("TESTWRITE\\FANCY_" + items[0] + "to" + items[-1] + ".csv", "a") as output:         ## One file Many Day
     # with open(Date + ".dat") as f, open("TESTWRITE\\cutword_IFEC_event" + Date + ".txt", "a") as output:      ## One file One Day
         content = f.readlines()
         for line in content:
@@ -151,7 +154,8 @@ for Date in items:
                             hh, mm, ss = getTime(jsonDecoded["time"])
                             id = jsonDecoded["id"]  ##identify number of stock
                             vol = jsonDecoded["vol"]
-                            sumVO,RO0,RO1,RO2,RO3,RO4 = getSumOffer(vol)
+                            # sumVO,RO0,RO1,RO2,RO3,RO4 = getSumOffer(vol)  #Fix bug ZeroDiv
+                            sumVO = getSumVol(vol)
 
 
 
@@ -168,7 +172,9 @@ for Date in items:
                             Temp = str(pri[0])+ ',' + str(pri[1])+ ',' + str(pri[2])+ ',' + str(pri[3])+ ',' + str(pri[4]) + ',' + str(vol[0])+ ',' + str(vol[1])+ ',' + str(vol[2])+ ',' + str(vol[3])+ ',' + str(vol[4])
 
 
-                            a = str(id)+ ',' + str(eve) + ',' + str(hh) + ',' + str(mm) + ',' + str(ss)  + ',' + toTemp(Temp,eve)+ ',' + str(sumVO)+ ',' + str(RO0)+ ',' + str(RO1)+ ',' + str(RO2)+ ',' + str(RO3)+ ',' + str(RO4)+',' + str(totalVol)
+                            # a = str(id)+ ',' + str(eve) + ',' + str(hh) + ',' + str(mm) + ',' + str(ss)  + ',' + toTemp(Temp,eve)+ ',' + str(sumVO)+ ',' + str(RO0)+ ',' + str(RO1)+ ',' + str(RO2)+ ',' + str(RO3)+ ',' + str(RO4)+',' + str(totalVol)
+
+                            a = str(id) + ',' + str(eve) + ',' + str(hh) + ',' + str(mm) + ',' + str(ss) + ',' + toTemp(Temp, eve) + ',' + str(sumVO) + ',' + str(totalVol)    #Fix bug ZeroDiv
 
                             output.writelines(a + '\n')
 
