@@ -83,14 +83,21 @@ def getDate(Date):
 
 tempBid = ",,,,,,,,,"
 tempOffer = ",,,,,,,,,"
-def toTemp(price,eve):
-    global tempBid,tempOffer
+tempBidVol = 0
+tempOffVol = 0
+def toTemp(price,eve,vol):
+    global tempBid,tempOffer,tempBidVol,tempOffVol
+
+    sumVO = getSumVol(vol)
+
     if eve == 1:
         tempBid = price
-        return price+","+tempOffer
+        tempBidVol = sumVO
+        return price+","+tempOffer+","+str(tempBidVol)+","+str(tempOffVol)
     else:
         tempOffer = price
-        return tempBid+","+price
+        tempOffVol = sumVO
+        return tempBid+","+price+","+str(tempBidVol)+","+str(tempOffVol)
 
 
 
@@ -111,7 +118,7 @@ for Date in items:
 
     YYYY,MM,DD = getDate(Date)
 
-    with open("INPUT\\" +Date+".dat") as f, open("TESTWRITE\\FANCY_" + items[0] + "to" + items[-1] + ".csv", "a") as output:         ## One file Many Day
+    with open("INPUT\\" +Date+".dat") as f, open("TESTWRITE\\FANCY_testnewVol" + items[0] + "to" + items[-1] + ".csv", "a") as output:         ## One file Many Day
     # with open(Date + ".dat") as f, open("TESTWRITE\\cutword_IFEC_event" + Date + ".txt", "a") as output:      ## One file One Day
         content = f.readlines()
         for line in content:
@@ -155,7 +162,7 @@ for Date in items:
                             id = jsonDecoded["id"]  ##identify number of stock
                             vol = jsonDecoded["vol"]
                             # sumVO,RO0,RO1,RO2,RO3,RO4 = getSumOffer(vol)  #Fix bug ZeroDiv
-                            sumVO = getSumVol(vol)
+
 
 
 
@@ -174,7 +181,7 @@ for Date in items:
 
                             # a = str(id)+ ',' + str(eve) + ',' + str(hh) + ',' + str(mm) + ',' + str(ss)  + ',' + toTemp(Temp,eve)+ ',' + str(sumVO)+ ',' + str(RO0)+ ',' + str(RO1)+ ',' + str(RO2)+ ',' + str(RO3)+ ',' + str(RO4)+',' + str(totalVol)
 
-                            a = str(id) + ',' + str(eve) + ',' + str(hh) + ',' + str(mm) + ',' + str(ss) + ',' + toTemp(Temp, eve) + ',' + str(sumVO) + ',' + str(totalVol)    #Fix bug ZeroDiv
+                            a = str(id) + ',' + str(eve) + ',' + str(hh) + ',' + str(mm) + ',' + str(ss) + ',' + toTemp(Temp, eve,vol)  + ',' + str(totalVol)    #Fix bug ZeroDiv
 
                             output.writelines(a + '\n')
 
