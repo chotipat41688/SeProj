@@ -49,7 +49,7 @@ def toTemp(price,vol,eve):
 import json
 import csv
 
-items= ["2016-12-08_FANCY_30","2016-12-09_FANCY_30"]
+items= ["2016-12-08_FANCY_30"]
 # items = ["2016-10-17","2016-10-18","2016-10-19","2016-10-20"]
 
 
@@ -57,7 +57,7 @@ for Date in items:
 
     YYYY,MM,DD = getDate(Date)
 
-    with open("INPUT\\" +Date+".dat") as f, open("TESTWRITE\\csvwrite" + items[0] + "to" + items[-1] + ".csv", "a") as output:         ## One file Many Day
+    with open("INPUT\\" +Date+".dat") as f, open("TESTWRITE\\csvwrite2" + items[0] + "to" + items[-1] + ".csv", "a") as output:         ## One file Many Day
     # with open(Date + ".dat") as f, open("TESTWRITE\\cutword_IFEC_event" + Date + ".txt", "a") as output:      ## One file One Day
         content = f.readlines()
         for line in content:
@@ -79,7 +79,7 @@ for Date in items:
                             # Temp = str(pri[0])+ ',' + str(pri[1])+ ',' + str(pri[2])+ ',' + str(pri[3])+ ',' + str(pri[4]) + ',' + str(vol[0])+ ',' + str(vol[1])+ ',' + str(vol[2])+ ',' + str(vol[3])+ ',' + str(vol[4])
                             a = [id] + [hh] + [mm] + [ss] + toTemp(pri, vol, eve)
 
-                            wr = csv.writer(output)
+                            wr = csv.writer(output, lineterminator='\n')
                             wr.writerow(a)
 
 
