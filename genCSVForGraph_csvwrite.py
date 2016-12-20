@@ -13,8 +13,7 @@ def getFreefloat():
     return (allShare * freeFloat)/100
 
 def check(list):
-    if list[1] is not 0 and list[4] is 0: return 0
-    elif list[0] is 0 and list[1] is 0: return 1
+    if list[1] is not 0 and list[2] is not 0 and list[4] is 0: return 0
     else: return 1
 
 def getSumVol(list):
