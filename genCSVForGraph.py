@@ -14,6 +14,7 @@ def getFreefloat():
 
 def check(list):
     if list[1] is not 0 and list[4] is 0: return 0
+    elif list[0] is 0 and list[1] is 0: return 1
     else: return 1
 
 def getSumVol(list):
@@ -97,17 +98,11 @@ for Date in items:
                                 id = jsonDecoded["id"]  ##identify number of stock
                                 vol = jsonDecoded["vol"]
 
-
-                                # Temp = str(pri[0])+ ',' + str(pri[1])+ ',' + str(pri[2])+ ',' + str(pri[3])+ ',' + str(pri[4]) + ',' + str(vol[0])+ ',' + str(vol[1])+ ',' + str(vol[2])+ ',' + str(vol[3])+ ',' + str(vol[4])
                                 a = [id] + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
 
+                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
+                                wr.writerow(a)
 
-                                eiei = str(a)
-
-                                # wr = csv.writer(output, lineterminator='\n')
-                                # wr.writerow(a)
-
-                                ref_files[symbols.index(sym)].writelines(eiei + '\n')
 
 
 
