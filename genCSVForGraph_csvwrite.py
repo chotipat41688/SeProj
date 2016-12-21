@@ -1,8 +1,9 @@
-symbols = ["FANCY", "2S", "EVER", "TMI", "UKEM", "AUCT", "SRICHA"]
+symbols = ["FANCY"]
 
-items= ["2016-12-09_FANCY_30"]
-# items = ["2016-10-17","2016-10-18","2016-10-19","2016-10-20"]
+# items= ["2016-12-09_FANCY_30"]
+# items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
+items= [ "2016-12-19"]
 
 
 
@@ -83,8 +84,12 @@ for Date in items:
             content = f.readlines()
             for line in content:
                 if ('data' in line):
-                    jsonData = line.replace("data: ", "")
-                    jsonDecoded = json.loads(jsonData)
+                    try:
+                        jsonData = line.replace("data: ", "")
+                        jsonDecoded = json.loads(jsonData)
+                    except ValueError:
+                        print Date, jsonData
+                        continue
                     if 'sym' in jsonDecoded.keys():
                         if jsonDecoded["sym"] in symbols:
                             if 'time' in jsonDecoded.keys():
@@ -101,6 +106,8 @@ for Date in items:
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
+
+
 
 
 
