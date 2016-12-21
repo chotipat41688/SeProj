@@ -1,9 +1,9 @@
-symbols = ["FANCY"]
+symbols = ["GL"]
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
-items= [ "2016-12-19"]
+items= [ "2016-12-09_FANCY_30"]
 
 
 
@@ -61,6 +61,7 @@ tempBidVol = dict()
 tempOffVol = dict()
 tempAll = dict()
 
+
 for symbol in symbols:
     tempBid[symbol] = [None, None, None, None, None, None, None, None, None, None]
     tempOffer[symbol] = [None, None, None, None, None, None, None, None, None, None]
@@ -88,15 +89,42 @@ for Date in items:
                         jsonData = line.replace("data: ", "")
                         jsonDecoded = json.loads(jsonData)
                     except ValueError:
-                        print Date, jsonData
+                        # print Date, jsonData
                         continue
+
                     if 'sym' in jsonDecoded.keys():
-                        if jsonDecoded["sym"] in symbols:
+                        sym = jsonDecoded["sym"]
+                        if sym in symbols:
+                            if 'isf' in jsonDecoded.keys():
+
+                                """
+                                ("isf" is about Proj.Price and Proj.Vol @ ATO/ATC)
+                                'isf': 'T' is Confirmed Proj. and use data before this state  (use latest 'isf': 'F')
+                                'isf': 'T' tag is use to find time that ATO/ATC is take action.
+                                """
+
+                                pri = jsonDecoded["pri"]  # price
+                                hh, mm, ss = getTime(jsonDecoded["tim"])    #time
+                                if (hh is "9"):
+                                    print "eiei"
+                                vol = jsonDecoded["vol"]  # volume
+                                op1 = jsonDecoded["op1"]  # open1
+                                op2 = jsonDecoded["op2"]  # open2
+
+                                a = [None] + [hh] + [mm] + [ss] + [pri] + [vol] + [op1] + [op2]
+
+                                # isf = jsonDecoded["isf"]    #isFinal? True or False
+                                # if pri != 0 and vol != 0:
+                                #     a = (str(id) + ',5,'  + str(hh) + ',' + str(mm) + ',' + str(ss) + ',' + str(pri) + ',' + str(vol) + ',' + str(op1) + ',' + str(op2)) + ',' + str(totalVol)
+                                #     output.writelines(a + '\n')
+                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
+                                wr.writerow(a)
+
+
                             if 'time' in jsonDecoded.keys():
                                 pri = jsonDecoded["pri"]
                                 if check(pri) is 0: continue
 
-                                sym = jsonDecoded["sym"]
                                 eve = event(jsonDecoded["sid"])
                                 hh, mm, ss = getTime(jsonDecoded["time"])
                                 id = jsonDecoded["id"]  ##identify number of stock
@@ -106,6 +134,31 @@ for Date in items:
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
+
+                            if 'ava' in jsonDecoded.keys():
+                                # tim = jsonDecoded["tim"]  ##time
+                                hh, mm, ss = getTime(jsonDecoded["tim"])
+                                actVol = jsonDecoded["vol"]  ##vol action
+                                prc = jsonDecoded["prc"]  # Last price action(Baht) must / 100
+                                # ava = jsonDecoded["ava"]  # Total Trade Value(Baht) must / 100
+                                avo = jsonDecoded["avo"]  # Total Trade Volume(Share)
+
+                                # bvo = jsonDecoded["bvo"]  # Net Buy Volume(Share)
+                                # svo = jsonDecoded["svo"]  # Net Sell Volume(Share)
+                                # ovo = jsonDecoded["ovo"]  # Net ATO/ATC Volume(Share)
+                                # sid = jsonDecoded["sid"]  ## B = Buy, S = Sell
+                                prr = jsonDecoded["prr"]  # Previous Close must / 100
+                                hgh = jsonDecoded["hgh"]  # high Price must / 100
+                                low = jsonDecoded["low"]  # low Price must / 100
+                                avg = jsonDecoded["avg"]  # Average Price must / 100
+                                eve = event(jsonDecoded["sid"]) + 2
+
+                                a =  [None] + [hh] + [mm] + [ss] + [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
+
+                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
+                                wr.writerow(a)
+
+
 
 
 
