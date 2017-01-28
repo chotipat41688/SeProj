@@ -84,15 +84,15 @@ def toTemp(price, vol, eve, symbol):
 tempTimestamp = 0
 def checkTimestamp(Timestamp):
     global tempTimestamp
-    if(Timestamp>tempTimestamp):
-        tempTimestamp = Timestamp
-    return tempTimestamp
-    #     
-    # if(Timestamp <= tempTimestamp):
-    #     return tempTimestamp,1
-    # else:
+    # if(Timestamp>tempTimestamp):
     #     tempTimestamp = Timestamp
-    #     return Timestamp,0
+    # return tempTimestamp
+    #
+    if(Timestamp < tempTimestamp):
+        return tempTimestamp,1
+    else:
+        tempTimestamp = Timestamp
+        return Timestamp,0
 
 
 
@@ -182,7 +182,7 @@ for Date in items:
 
 
                                 # a = [None] + YYYY + MM + DD + [hh] + [mm] + [ss] + [pri] + [vol] + [op1] + [op2]
-                                a = [None] + [Timestamp] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
+                                a = [None] + [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
 
                                 # isf = jsonDecoded["isf"]    #isFinal? True or False
                                 # if pri != 0 and vol != 0:
@@ -222,7 +222,7 @@ for Date in items:
                                 side = event(jsonDecoded["sid"])
 
                                 # a = [id] + YYYY + MM + DD + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
-                                a = [id] + [Timestamp] + [side]+ [Date] + [tim] + toTemp(pri, vol, eve, sym)
+                                a = [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + toTemp(pri, vol, eve, sym)
 
                                 if(HH == 9 and mm == 30):
                                     continue
@@ -256,7 +256,7 @@ for Date in items:
                                 eve = event(jsonDecoded["sid"]) + 2
 
 
-                                a = [None] + [Timestamp] + [Date] + [tim]+ [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
+                                a = [None] + [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim]+ [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
