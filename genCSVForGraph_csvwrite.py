@@ -1,12 +1,12 @@
-symbols = ["SPPT"]
+symbols = ["AGE","IFS","CMO"]
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
 
 
-# items= ["TEST_2017-01-18"]
-items= ["Sample"]
+items= ["2017-01-27"]
+# items= ["Sample"]
 
 
 
@@ -37,6 +37,29 @@ def getTime(time):
 def getDate(Date):
     dateSplit = Date.split('-')
     return dateSplit
+
+
+
+from datetime import datetime, timedelta
+
+def Timestamp2Datetime(Timestamp):
+    Datetime = datetime.fromtimestamp(Timestamp-25200).strftime('%Y-%m-%d-%H-%M-%S')
+    print Datetime
+    return Datetime
+
+
+# YYYY = int(YYYY)
+# MM = int(MM)
+# DD = int(DD)
+# HH = int(HH)
+# mm = int(mm)
+# SS = int(SS)
+
+def Datetime2Timestamp(dt, epoch=datetime(1970,1,1)):
+    td = dt - epoch
+    # return td.total_seconds()
+    return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) // 10**6
+
 
 
 def toTemp(price, vol, eve, symbol):
@@ -87,8 +110,12 @@ ref_files = [open("TESTWRITE\\List\\" + Symbol + ".csv", "a") for Symbol in symb
 
 for Date in items:
 
-    # YYYY,MM,DD = getDate(Date)
-    #
+    YYYY,MM,DD = getDate(Date)
+
+    YYYY = int(YYYY)
+    MM = int(MM)
+    DD = int(DD)
+
     # YYYY = [YYYY]
     # MM = [MM]
     # DD = [DD]
@@ -124,6 +151,11 @@ for Date in items:
 
                                 # hh, mm, ss = getTime(jsonDecoded["tim"])    #time
                                 tim = jsonDecoded["tim"]    #time
+                                HH, mm, SS = getTime(jsonDecoded["tim"])            ###
+                                HH = int(HH)
+                                mm = int(mm)
+                                SS = int(SS)
+                                Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
 
 
                                 # priATO[sym] = pri
@@ -135,14 +167,16 @@ for Date in items:
 
 
                                 # a = [None] + YYYY + MM + DD + [hh] + [mm] + [ss] + [pri] + [vol] + [op1] + [op2]
-                                a = [None] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
+                                a = [None] + [Timestamp] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
 
                                 # isf = jsonDecoded["isf"]    #isFinal? True or False
                                 # if pri != 0 and vol != 0:
                                 #     a = (str(id) + ',5,'  + str(hh) + ',' + str(mm) + ',' + str(ss) + ',' + str(pri) + ',' + str(vol) + ',' + str(op1) + ',' + str(op2)) + ',' + str(totalVol)
                                 #     output.writelines(a + '\n')
-                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
-                                wr.writerow(a)
+
+
+                                # wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
+                                # wr.writerow(a)
 
 
                             if 'time' in jsonDecoded.keys():
@@ -152,18 +186,31 @@ for Date in items:
                                 eve = event(jsonDecoded["sid"])
                                 # hh, mm, ss = getTime(jsonDecoded["time"])
                                 tim = jsonDecoded["time"]
+
+                                HH, mm, SS = getTime(jsonDecoded["time"])  ###
+                                HH = int(HH)
+                                mm = int(mm)
+                                SS = int(SS)
+                                Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
+
+
                                 id = jsonDecoded["id"]  ##identify number of stock
                                 vol = jsonDecoded["vol"]
 
+
                                 # a = [id] + YYYY + MM + DD + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
-                                a = [id] + [Date] + [tim] + toTemp(pri, vol, eve, sym)
+                                a = [id] + [Timestamp] + [Date] + [tim] + toTemp(pri, vol, eve, sym)
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
 
                             # if 'ava' in jsonDecoded.keys():
                             #     # tim = jsonDecoded["tim"]  ##time
-                            #     hh, mm, ss = getTime(jsonDecoded["tim"])
+                            #     HH, mm, SS = getTime(jsonDecoded["tim"])
+                            #         HH = int(HH)
+                            #         mm = int(mm)
+                            #         SS = int(SS)
+                            #         Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
                             #     actVol = jsonDecoded["vol"]  ##vol action
                             #     prc = jsonDecoded["prc"]  # Last price action(Baht) must / 100
                             #     # ava = jsonDecoded["ava"]  # Total Trade Value(Baht) must / 100
@@ -179,7 +226,7 @@ for Date in items:
                             #     avg = jsonDecoded["avg"]  # Average Price must / 100
                             #     eve = event(jsonDecoded["sid"]) + 2
 
-                                # a =  [None] + YYYY + MM + DD + [hh] + [mm] + [ss] + [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
+                                # a =  [None] + [Timestamp] + YYYY + MM + DD + [hh] + [mm] + [ss] + [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
                                 #
                                 # wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 # wr.writerow(a)
