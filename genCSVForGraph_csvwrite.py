@@ -197,9 +197,14 @@ for Date in items:
                                 id = jsonDecoded["id"]  ##identify number of stock
                                 vol = jsonDecoded["vol"]
 
-
+                                if jsonDecoded["sid"] == 'S':
+                                    side = 1  # Fill Offer
+                                elif jsonDecoded["sid"] == 'B':
+                                    side = 0  # Fill Bid
+                                else:
+                                    side = 3
                                 # a = [id] + YYYY + MM + DD + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
-                                a = [id] + [Timestamp] + [Date] + [tim] + toTemp(pri, vol, eve, sym)
+                                a = [id] + [Timestamp] + [side]+ [Date] + [tim] + toTemp(pri, vol, eve, sym)
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
