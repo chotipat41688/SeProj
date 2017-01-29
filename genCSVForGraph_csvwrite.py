@@ -172,7 +172,7 @@ for Date in items:
                                 mm = int(mm)
                                 SS = int(SS)
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
-                                Timestamp = checkTimestamp(Timestamp)
+                                Timestamp = checkTimestamp(Timestamp,sym)
 
 
                                 # priATO[sym] = pri
@@ -208,7 +208,7 @@ for Date in items:
                                 mm = int(mm)
                                 SS = int(SS)
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
-                                Timestamp = checkTimestamp(Timestamp)
+                                Timestamp = checkTimestamp(Timestamp,sym)
 
 
                                 id = jsonDecoded["id"]  ##identify number of stock
@@ -234,13 +234,12 @@ for Date in items:
 
                             if 'ava' in jsonDecoded.keys():
                                 tim = jsonDecoded["tim"]  ##time
-                                # HH, mm, SS = getTime(jsonDecoded["tim"])
-
+                                HH, mm, SS = getTime(jsonDecoded["tim"])
                                 HH = int(HH)
                                 mm = int(mm)
                                 SS = int(SS)
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
-                                Timestamp = checkTimestamp(Timestamp)
+                                Timestamp = checkTimestamp(Timestamp,sym)
 
                                 actVol = jsonDecoded["vol"]  ##vol action
                                 prc = jsonDecoded["prc"]  # Last price action(Baht) must / 100
