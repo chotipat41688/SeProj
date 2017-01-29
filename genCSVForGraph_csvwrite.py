@@ -81,17 +81,17 @@ def toTemp(price, vol, eve, symbol):
 
 
 
-tempTimestamp = 0
-def checkTimestamp(Timestamp):
-    global tempTimestamp
+
+
+def checkTimestamp(Timestamp,symbol):
     # if(Timestamp>tempTimestamp):
     #     tempTimestamp = Timestamp
     # return tempTimestamp
     #
-    if(Timestamp < tempTimestamp):
-        return tempTimestamp,1
+    if(Timestamp < tempTimestamp[symbol]):
+        return tempTimestamp[symbol],1
     else:
-        tempTimestamp = Timestamp
+        tempTimestamp[symbol] = Timestamp
         return Timestamp,0
 
 
@@ -108,12 +108,14 @@ tempBidVol = dict()
 tempOffVol = dict()
 tempAll = dict()
 priATO = dict()
+tempTimestamp = dict()
 
 
 for symbol in symbols:
     tempBid[symbol] = [None, None, None, None, None, None, None, None, None, None]
     tempOffer[symbol] = [None, None, None, None, None, None, None, None, None, None]
     priATO[symbol] = 0
+    tempTimestamp[symbol] = 0
 
 for symbol in symbols:
     tempBidVol[symbol] = []
