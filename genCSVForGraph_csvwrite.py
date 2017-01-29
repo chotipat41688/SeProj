@@ -1,4 +1,4 @@
-symbols = ["AGE","IFS","CMO"]
+symbols = ["AGE","IFS","CMO","IFEC"]
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
@@ -109,6 +109,7 @@ tempOffVol = dict()
 tempAll = dict()
 priATO = dict()
 tempTimestamp = dict()
+marketStatus = dict()
 
 
 for symbol in symbols:
@@ -116,6 +117,7 @@ for symbol in symbols:
     tempOffer[symbol] = [None, None, None, None, None, None, None, None, None, None]
     priATO[symbol] = 0
     tempTimestamp[symbol] = 0
+    marketStatus[symbol] = 0
 
 for symbol in symbols:
     tempBidVol[symbol] = []
@@ -181,10 +183,21 @@ for Date in items:
                                 op1 = jsonDecoded["op1"]  # open1
                                 op2 = jsonDecoded["op2"]  # open2
 
+                                isf = jsonDecoded["isf"]
+                                if(isf == 'F'):
+                                    marketStatus[sym] = 0
+                                elif(isf == 'T'):
+                                    marketStatus[sym] = 1
+                                else:
+                                    marketStatus[sym] = 3
+                                    print "eiei"
 
 
                                 # a = [None] + YYYY + MM + DD + [hh] + [mm] + [ss] + [pri] + [vol] + [op1] + [op2]
-                                a = [None] + [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
+                                a = [marketStatus[sym]] + [None] +  [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
+
+
+
 
                                 # isf = jsonDecoded["isf"]    #isFinal? True or False
                                 # if pri != 0 and vol != 0:
@@ -224,7 +237,7 @@ for Date in items:
                                 side = event(jsonDecoded["sid"])
 
                                 # a = [id] + YYYY + MM + DD + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
-                                a = [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + toTemp(pri, vol, eve, sym)
+                                a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + toTemp(pri, vol, eve, sym)
 
                                 if(HH == 9 and mm == 30):
                                     continue
@@ -257,7 +270,7 @@ for Date in items:
                                 eve = event(jsonDecoded["sid"]) + 2
 
 
-                                a = [None] + [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim]+ [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
+                                a = [marketStatus[sym]] + [None] + [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim]+ [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
