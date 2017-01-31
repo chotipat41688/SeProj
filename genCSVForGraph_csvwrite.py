@@ -67,8 +67,6 @@ def Datetime2Timestamp(dt, epoch=datetime(1970,1,1)):
 def toTemp(price, vol, eve, symbol):
     sumVO = getSumVol(vol)
 
-    if price[0] == 0:
-        price[0] = priATO[symbol]
 
     if eve == 1:
         tempBid[symbol] = price + vol
@@ -102,6 +100,7 @@ import time
 
 t0 = time.time()
 
+idSymbol = dict()
 tempBid = dict()
 tempOffer = dict()
 tempBidVol = dict()
@@ -110,19 +109,25 @@ tempAll = dict()
 priATO = dict()
 tempTimestamp = dict()
 marketStatus = dict()
-
+forTemp = dict()
+clearNoise = dict()
 
 for symbol in symbols:
     tempBid[symbol] = [None, None, None, None, None, None, None, None, None, None]
     tempOffer[symbol] = [None, None, None, None, None, None, None, None, None, None]
+    # forTemp[symbol] = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+
     priATO[symbol] = 0
     tempTimestamp[symbol] = 0
     marketStatus[symbol] = 0
+    clearNoise[symbol] = 0
+    idSymbol[symbol] = 0
+
 
 for symbol in symbols:
     tempBidVol[symbol] = []
     tempOffVol[symbol] = []
-
+    forTemp[symbol] = []
 
 ref_files = [open("TESTWRITE\\List\\" + Symbol + ".csv", "a") for Symbol in symbols]
 
@@ -190,16 +195,20 @@ for Date in items:
                                         marketStatus[sym] = 2   #Pre-Open2
                                 elif(isf == 'T'):
                                     marketStatus[sym] = 1   #Open
+                                    clearNoise[sym] = Timestamp[0]
+
                                     if(HH == 16):
                                         marketStatus[sym] = 3   #Pre-Close
                                 else:
                                     marketStatus[sym] = 5
-                                    print "eiei"
+                                    print "Unknown status"
 
 
-                                a = [marketStatus[sym]] + [None] +  [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
-                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
-                                wr.writerow(a)
+                                # a = [marketStatus[sym]] + [None] +  [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
+                                # wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
+                                # wr.writerow(a)
+
+
 
 
                                 # isf = jsonDecoded["isf"]    #isFinal? True or False
@@ -223,11 +232,21 @@ for Date in items:
                                 HH = int(HH)
                                 mm = int(mm)
                                 SS = int(SS)
+
+
+
+
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
                                 Timestamp = checkTimestamp(Timestamp,sym)
 
+                                if(clearNoise[sym] == Timestamp[0]):
+                                    continue
 
-                                id = jsonDecoded["id"]  ##identify number of stock
+
+
+                                ids = jsonDecoded["id"]  ##identify number of stock
+                                idSymbol[sym] = ids
+
                                 vol = jsonDecoded["vol"]
 
                                 # if jsonDecoded["sid"] == 'S':
@@ -239,16 +258,27 @@ for Date in items:
 
                                 side = event(jsonDecoded["sid"])
 
-                                # a = [id] + YYYY + MM + DD + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
-                                a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + toTemp(pri, vol, eve, sym)
+                                bidOffer = toTemp(pri, vol, eve, sym)
 
-                                if(HH == 9 and mm == 30):
+                                if bidOffer[0] == 0 and marketStatus[sym] != 1:
+                                    bidOffer[0] = priATO[sym]
+                                if bidOffer[10] == 0 and marketStatus[sym] != 1:
+                                    bidOffer[10] = priATO[sym]
+
+                                # a = [id] + YYYY + MM + DD + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
+
+                                # a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
+
+                                forTemp[sym] = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
+
+
+                                if (HH == 9 and mm == 30):
                                     continue
                                 if(marketStatus[sym] == 3):
                                     continue
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
-                                    wr.writerow(a)
+                                    wr.writerow(forTemp[sym])
 
                             elif 'ava' in jsonDecoded.keys():
                                 tim = jsonDecoded["tim"]  ##time
@@ -275,7 +305,8 @@ for Date in items:
                                 eve = event(jsonDecoded["sid"]) + 2
 
 
-                                a = [marketStatus[sym]] + [None] + [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim]+ [eve] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
+
+                                a = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [eve] + [Date] + [tim] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
