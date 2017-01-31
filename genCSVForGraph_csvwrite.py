@@ -1,11 +1,11 @@
-symbols = ["AGE","IFS","CMO","IFEC"]
+symbols = ["IRCP-W2"]
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
 
 
-items= ["2017-01-27"]
+items= ["2017-01-31"]
 # items= ["Sample"]
 
 
@@ -185,18 +185,21 @@ for Date in items:
 
                                 isf = jsonDecoded["isf"]
                                 if(isf == 'F'):
-                                    marketStatus[sym] = 0
+                                    marketStatus[sym] = 0   #Pre-Open1
+                                    if(HH == 14):
+                                        marketStatus[sym] = 2   #Pre-Open2
                                 elif(isf == 'T'):
-                                    marketStatus[sym] = 1
+                                    marketStatus[sym] = 1   #Open
+                                    if(HH == 16):
+                                        marketStatus[sym] = 3   #Pre-Close
                                 else:
-                                    marketStatus[sym] = 3
+                                    marketStatus[sym] = 5
                                     print "eiei"
 
 
-                                # a = [None] + YYYY + MM + DD + [hh] + [mm] + [ss] + [pri] + [vol] + [op1] + [op2]
                                 a = [marketStatus[sym]] + [None] +  [Timestamp[0]]+ [Timestamp[1]] + [Date] + [tim] + [pri] + [vol] + [op1] + [op2]
-
-
+                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
+                                wr.writerow(a)
 
 
                                 # isf = jsonDecoded["isf"]    #isFinal? True or False
@@ -204,13 +207,13 @@ for Date in items:
                                 #     a = (str(id) + ',5,'  + str(hh) + ',' + str(mm) + ',' + str(ss) + ',' + str(pri) + ',' + str(vol) + ',' + str(op1) + ',' + str(op2)) + ',' + str(totalVol)
                                 #     output.writelines(a + '\n')
 
-                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
-                                wr.writerow(a)
 
 
-                            if 'time' in jsonDecoded.keys():
+                            elif 'time' in jsonDecoded.keys():
                                 pri = jsonDecoded["pri"]
-                                if check(pri) is 0: continue
+                                if check(pri) is 0:
+                                    continue
+                                # if pri[]
 
                                 eve = event(jsonDecoded["sid"])
                                 # hh, mm, ss = getTime(jsonDecoded["time"])
@@ -241,11 +244,13 @@ for Date in items:
 
                                 if(HH == 9 and mm == 30):
                                     continue
+                                if(marketStatus[sym] == 3):
+                                    continue
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                     wr.writerow(a)
 
-                            if 'ava' in jsonDecoded.keys():
+                            elif 'ava' in jsonDecoded.keys():
                                 tim = jsonDecoded["tim"]  ##time
                                 HH, mm, SS = getTime(jsonDecoded["tim"])
                                 HH = int(HH)
@@ -274,6 +279,8 @@ for Date in items:
 
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
+
+
 
 
 
