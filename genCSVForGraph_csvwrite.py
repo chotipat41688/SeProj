@@ -50,12 +50,6 @@ def Timestamp2Datetime(Timestamp):
     return Datetime
 
 
-# YYYY = int(YYYY)
-# MM = int(MM)
-# DD = int(DD)
-# HH = int(HH)
-# mm = int(mm)
-# SS = int(SS)
 
 def Datetime2Timestamp(dt, epoch=datetime(1970,1,1)):
     td = dt - epoch
@@ -82,10 +76,6 @@ def toTemp(price, vol, eve, symbol):
 
 
 def checkTimestamp(Timestamp,symbol):
-    # if(Timestamp>tempTimestamp):
-    #     tempTimestamp = Timestamp
-    # return tempTimestamp
-    #
     if(Timestamp < tempTimestamp[symbol]):
         return tempTimestamp[symbol],1
     else:
@@ -107,6 +97,7 @@ tempBidVol = dict()
 tempOffVol = dict()
 tempAll = dict()
 priATO = dict()
+volATO = dict()
 tempTimestamp = dict()
 marketStatus = dict()
 forTemp = dict()
@@ -118,6 +109,7 @@ for symbol in symbols:
     # forTemp[symbol] = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
 
     priATO[symbol] = 0
+    volATO[symbol] = 0
     tempTimestamp[symbol] = 0
     marketStatus[symbol] = 0
     clearNoise[symbol] = 0
@@ -139,9 +131,6 @@ for Date in items:
     MM = int(MM)
     DD = int(DD)
 
-    # YYYY = [YYYY]
-    # MM = [MM]
-    # DD = [DD]
 
     with open("INPUT\\" +Date+".dat") as f:
         with open("TESTWRITE\\ma1" + items[0] + "to" + items[-1] + ".csv", "a") as output:         ## One file Many Day
@@ -172,7 +161,7 @@ for Date in items:
                                 pri = jsonDecoded["pri"]  # price
                                 priATO[sym] = pri
 
-                                # hh, mm, ss = getTime(jsonDecoded["tim"])    #time
+
                                 tim = jsonDecoded["tim"]    #time
                                 HH, mm, SS = getTime(jsonDecoded["tim"])            ###
                                 HH = int(HH)
@@ -182,9 +171,10 @@ for Date in items:
                                 Timestamp = checkTimestamp(Timestamp,sym)
 
 
-                                # priATO[sym] = pri
 
                                 vol = jsonDecoded["vol"]  # volume
+                                volATO[sym] = vol
+
                                 op1 = jsonDecoded["op1"]  # open1
                                 op2 = jsonDecoded["op2"]  # open2
 
@@ -193,12 +183,15 @@ for Date in items:
                                     marketStatus[sym] = 0   #Pre-Open1
                                     if(HH == 14):
                                         marketStatus[sym] = 2   #Pre-Open2
+                                    if (HH == 16):
+                                        marketStatus[sym] = 3  # Pre-Open2
+
                                 elif(isf == 'T'):
                                     marketStatus[sym] = 1   #Open
                                     clearNoise[sym] = Timestamp[0]
 
                                     if(HH == 16):
-                                        marketStatus[sym] = 3   #Pre-Close
+                                        marketStatus[sym] = 4   #Pre-Close
                                 else:
                                     marketStatus[sym] = 5
                                     print "Unknown status"
@@ -222,25 +215,20 @@ for Date in items:
                                 pri = jsonDecoded["pri"]
                                 if check(pri) is 0:
                                     continue
-                                # if pri[]
+
 
                                 eve = event(jsonDecoded["sid"])
-                                # hh, mm, ss = getTime(jsonDecoded["time"])
-                                tim = jsonDecoded["time"]
 
+                                tim = jsonDecoded["time"]
                                 HH, mm, SS = getTime(jsonDecoded["time"])  ###
                                 HH = int(HH)
                                 mm = int(mm)
                                 SS = int(SS)
 
 
-
-
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
                                 Timestamp = checkTimestamp(Timestamp,sym)
 
-                                if(clearNoise[sym] == Timestamp[0]):
-                                    continue
 
 
 
@@ -265,16 +253,17 @@ for Date in items:
                                 if bidOffer[10] == 0 and marketStatus[sym] != 1:
                                     bidOffer[10] = priATO[sym]
 
-                                # a = [id] + YYYY + MM + DD + [hh] + [mm] + [ss] + toTemp(pri, vol, eve, sym)
 
                                 # a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
 
-                                forTemp[sym] = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
+                                forTemp[sym] = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer + [volATO[sym]]
 
+                                if (clearNoise[sym] == Timestamp[0]):
+                                    continue
 
                                 if (HH == 9 and mm == 30):
                                     continue
-                                if(marketStatus[sym] == 3):
+                                if(marketStatus[sym] == 4):
                                     continue
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
