@@ -1,13 +1,16 @@
-symbols = ["FANCY","SGF","IRCP-W2"]
+import json
+import csv
+import time
+from datetime import datetime, timedelta
+
+symbols = ["FANCY","IRCP-W2","ATP30","TKT"]
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
 
-
-items= ["2017-02-01"]
+items = ["2017-01-27"]
 # items= ["Sample"]
-
 
 
 
@@ -41,26 +44,18 @@ def getDate(Date):
     return dateSplit
 
 
-
-from datetime import datetime, timedelta
-
 def Timestamp2Datetime(Timestamp):
     Datetime = datetime.fromtimestamp(Timestamp-25200).strftime('%Y-%m-%d-%H-%M-%S')
     print Datetime
     return Datetime
-
-
 
 def Datetime2Timestamp(dt, epoch=datetime(1970,1,1)):
     td = dt - epoch
     # return td.total_seconds()
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) // 10**6
 
-
-
 def toTemp(price, vol, eve, symbol):
     sumVO = getSumVol(vol)
-
 
     if eve == 1:
         tempBid[symbol] = price + vol
@@ -72,9 +67,6 @@ def toTemp(price, vol, eve, symbol):
         return tempBid[symbol] + price + vol + tempBidVol[symbol] + tempOffVol[symbol]
 
 
-
-
-
 def checkTimestamp(Timestamp,symbol):
     if(Timestamp < tempTimestamp[symbol]):
         return tempTimestamp[symbol],1
@@ -82,11 +74,6 @@ def checkTimestamp(Timestamp,symbol):
         tempTimestamp[symbol] = Timestamp
         return Timestamp,0
 
-
-
-import json
-import csv
-import time
 
 t0 = time.time()
 
@@ -106,13 +93,20 @@ clearNoise = dict()
 sumOrder = dict()
 countOrder = dict()
 
-
 lastPrice = dict()
 prior = dict()
 highPrice = dict()
 lowPrice = dict()
 avgPrice = dict()
 tradeVol = dict()
+buyVol = dict()
+sellVol = dict()
+auctVol = dict()
+
+gain = dict()
+count100k = dict()
+
+
 
 for symbol in symbols:
     tempBid[symbol] = [None, None, None, None, None, None, None, None, None, None]
@@ -135,6 +129,12 @@ for symbol in symbols:
     lowPrice[symbol] = 0
     avgPrice[symbol] = 0
     tradeVol[symbol] = 0
+    buyVol[symbol] = 0
+    sellVol[symbol] = 0
+    auctVol[symbol] = 0
+
+    gain[symbol] = 0
+    count100k[symbol] = 0
 
 
 for symbol in symbols:
@@ -160,7 +160,7 @@ for Date in items:
     # with open(Date + ".dat") as f, open("TESTWRITE\\cutword_IFEC_event" + Date + ".txt", "a") as output:      ## One file One Day
             content = f.readlines()
             for line in content:
-                if ('data' in line):
+                if 'data' in line:
                     try:
                         jsonData = line.replace("data: ", "")
                         jsonDecoded = json.loads(jsonData)
@@ -182,7 +182,6 @@ for Date in items:
                                 pri = jsonDecoded["pri"]  # price
                                 priATO[sym] = pri
 
-
                                 tim = jsonDecoded["tim"]    #time
                                 HH, mm, SS = getTime(jsonDecoded["tim"])            ###
                                 HH = int(HH)
@@ -191,8 +190,6 @@ for Date in items:
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
                                 Timestamp = checkTimestamp(Timestamp,sym)
 
-
-
                                 vol = jsonDecoded["vol"]  # volume
                                 volATO[sym] = vol
 
@@ -200,18 +197,18 @@ for Date in items:
                                 op2 = jsonDecoded["op2"]  # open2
 
                                 isf = jsonDecoded["isf"]
-                                if(isf == 'F'):
+                                if isf == 'F':
                                     marketStatus[sym] = 0   #Pre-Open1
-                                    if(HH == 14):
+                                    if HH == 14:
                                         marketStatus[sym] = 2   #Pre-Open2
-                                    if (HH == 16):
+                                    if HH == 16:
                                         marketStatus[sym] = 3  # Pre-Open2
 
-                                elif(isf == 'T'):
+                                elif isf == 'T':
                                     marketStatus[sym] = 1   #Open
                                     clearNoise[sym] = Timestamp[0]
 
-                                    if(HH == 16):
+                                    if HH == 16:
                                         marketStatus[sym] = 4   #Pre-Close
                                 else:
                                     marketStatus[sym] = 5
@@ -230,13 +227,10 @@ for Date in items:
                                 #     a = (str(id) + ',5,'  + str(hh) + ',' + str(mm) + ',' + str(ss) + ',' + str(pri) + ',' + str(vol) + ',' + str(op1) + ',' + str(op2)) + ',' + str(totalVol)
                                 #     output.writelines(a + '\n')
 
-
-
                             elif 'time' in jsonDecoded.keys():
                                 pri = jsonDecoded["pri"]
                                 if check(pri) is 0:
                                     continue
-
 
                                 eve = event(jsonDecoded["sid"])
 
@@ -246,12 +240,8 @@ for Date in items:
                                 mm = int(mm)
                                 SS = int(SS)
 
-
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
                                 Timestamp = checkTimestamp(Timestamp,sym)
-
-
-
 
                                 ids = jsonDecoded["id"]  ##identify number of stock
                                 idSymbol[sym] = ids
@@ -274,22 +264,24 @@ for Date in items:
                                 if bidOffer[10] == 0 and marketStatus[sym] != 1:
                                     bidOffer[10] = priATO[sym]
 
+                                if marketStatus[sym] == 1:
+                                    gain[sym] = bidOffer[0] - prior[sym]
+
+
 
                                 # a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
 
-                                forTemp[sym] = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer + \
+                                forTemp[sym] = [Date] + [tim] + [idSymbol[sym]] + [marketStatus[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side] + bidOffer + \
                                                [volATO[sym]] + [sumOrder[sym]] + [countOrder[sym]] + \
-                                               [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]]
+                                               [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
+                                               [gain[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
-
-
-
-                                if (clearNoise[sym] == Timestamp[0]):
+                                if clearNoise[sym] == Timestamp[0]:
                                     continue
 
-                                if (HH == 9 and mm == 30):
+                                if HH == 9 and mm == 30:
                                     continue
-                                if(marketStatus[sym] == 4):
+                                if marketStatus[sym] == 4:
                                     continue
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
@@ -314,9 +306,14 @@ for Date in items:
                                 avo = jsonDecoded["avo"]  # Total Trade Volume(Share)
                                 tradeVol[sym] = avo
 
-                                # bvo = jsonDecoded["bvo"]  # Net Buy Volume(Share)
-                                # svo = jsonDecoded["svo"]  # Net Sell Volume(Share)
-                                # ovo = jsonDecoded["ovo"]  # Net ATO/ATC Volume(Share)
+                                bvo = jsonDecoded["bvo"]  # Net Buy Volume(Share)
+                                svo = jsonDecoded["svo"]  # Net Sell Volume(Share)
+                                ovo = jsonDecoded["ovo"]  # Net ATO/ATC Volume(Share)
+
+                                buyVol[sym] = bvo
+                                sellVol[sym] = svo
+                                auctVol[sym] = ovo
+
                                 # sid = jsonDecoded["sid"]  ## B = Buy, S = Sell
 
                                 prr = jsonDecoded["prr"]  # Previous Close must / 100
@@ -330,28 +327,19 @@ for Date in items:
 
                                 eve = event(jsonDecoded["sid"]) + 2
 
-
-
-
-
-
-
                                 sumOrder[sym] += actVol
                                 countOrder[sym] += 1
 
+                                if sumOrder[sym] >= 100000:
+                                    count100k[sym] = 1
+                                else:
+                                    count100k[sym] = 0
 
-
-                                a = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [eve] + [Date] + [tim] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
-                                wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
-                                wr.writerow(a)
-
-
-
-
-
+                                # a = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [eve] + [Date] + [tim] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
+                                # wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
+                                # wr.writerow(a)
 
 t1 = time.time()
-
 
 total = t1-t0
 
