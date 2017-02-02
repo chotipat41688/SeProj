@@ -1,11 +1,11 @@
-symbols = ["IRCP-W2"]
+symbols = ["FANCY","SGF","IRCP-W2"]
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
 
 
-items= ["2017-01-31"]
+items= ["2017-02-01"]
 # items= ["Sample"]
 
 
@@ -103,6 +103,17 @@ marketStatus = dict()
 forTemp = dict()
 clearNoise = dict()
 
+sumOrder = dict()
+countOrder = dict()
+
+
+lastPrice = dict()
+prior = dict()
+highPrice = dict()
+lowPrice = dict()
+avgPrice = dict()
+tradeVol = dict()
+
 for symbol in symbols:
     tempBid[symbol] = [None, None, None, None, None, None, None, None, None, None]
     tempOffer[symbol] = [None, None, None, None, None, None, None, None, None, None]
@@ -114,6 +125,16 @@ for symbol in symbols:
     marketStatus[symbol] = 0
     clearNoise[symbol] = 0
     idSymbol[symbol] = 0
+
+    sumOrder[symbol] = 0
+    countOrder[symbol] = 0
+
+    lastPrice[symbol] = 0
+    prior[symbol] = 0
+    highPrice[symbol] = 0
+    lowPrice[symbol] = 0
+    avgPrice[symbol] = 0
+    tradeVol[symbol] = 0
 
 
 for symbol in symbols:
@@ -256,7 +277,12 @@ for Date in items:
 
                                 # a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
 
-                                forTemp[sym] = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer + [volATO[sym]]
+                                forTemp[sym] = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer + \
+                                               [volATO[sym]] + [sumOrder[sym]] + [countOrder[sym]] + \
+                                               [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]]
+
+
+
 
                                 if (clearNoise[sym] == Timestamp[0]):
                                     continue
@@ -268,6 +294,8 @@ for Date in items:
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                     wr.writerow(forTemp[sym])
+                                    sumOrder[sym] = 0
+                                    countOrder[sym] = 0
 
                             elif 'ava' in jsonDecoded.keys():
                                 tim = jsonDecoded["tim"]  ##time
@@ -280,23 +308,40 @@ for Date in items:
 
                                 actVol = jsonDecoded["vol"]  ##vol action
                                 prc = jsonDecoded["prc"]  # Last price action(Baht) must / 100
+                                lastPrice[sym] = prc
+
                                 # ava = jsonDecoded["ava"]  # Total Trade Value(Baht) must / 100
                                 avo = jsonDecoded["avo"]  # Total Trade Volume(Share)
+                                tradeVol[sym] = avo
 
                                 # bvo = jsonDecoded["bvo"]  # Net Buy Volume(Share)
                                 # svo = jsonDecoded["svo"]  # Net Sell Volume(Share)
                                 # ovo = jsonDecoded["ovo"]  # Net ATO/ATC Volume(Share)
                                 # sid = jsonDecoded["sid"]  ## B = Buy, S = Sell
+
                                 prr = jsonDecoded["prr"]  # Previous Close must / 100
                                 hgh = jsonDecoded["hgh"]  # high Price must / 100
                                 low = jsonDecoded["low"]  # low Price must / 100
                                 avg = jsonDecoded["avg"]  # Average Price must / 100
+                                prior[sym] = prr
+                                highPrice[sym] = hgh
+                                lowPrice[sym] = low
+                                avgPrice[sym] = avg
+
                                 eve = event(jsonDecoded["sid"]) + 2
 
 
 
-                                a = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [eve] + [Date] + [tim] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
 
+
+
+
+                                sumOrder[sym] += actVol
+                                countOrder[sym] += 1
+
+
+
+                                a = [marketStatus[sym]] + [idSymbol[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [eve] + [Date] + [tim] + [prc] + [actVol] + [avo] + [prr] + [hgh] + [low] + [avg]
                                 wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 wr.writerow(a)
 
