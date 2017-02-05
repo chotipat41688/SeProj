@@ -3,13 +3,13 @@ import csv
 import time
 from datetime import datetime, timedelta
 
-symbols = ["FANCY","IRCP-W2","ATP30","TKT"]
+symbols = ["JAS","JAS-W3","DTAC"]
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
 
-items = ["2017-01-27"]
+items = ["2017-01-24"]
 # items= ["Sample"]
 
 
@@ -143,6 +143,7 @@ for symbol in symbols:
     forTemp[symbol] = []
 
 ref_files = [open("TESTWRITE\\List\\" + Symbol + ".csv", "a") for Symbol in symbols]
+ref_files2 = [open("TESTWRITE\\Listato\\" + Symbol + ".csv", "a") for Symbol in symbols]
 
 for Date in items:
 
@@ -281,8 +282,12 @@ for Date in items:
 
                                 if HH == 9 and mm == 30:
                                     continue
-                                if marketStatus[sym] == 4:
-                                    continue
+                                # if marketStatus[sym] == 4:
+                                if marketStatus[sym] != 1:  ##selective row when market opened only.
+                                    # continue
+                                    wr = csv.writer(ref_files2[symbols.index(sym)], lineterminator='\n')
+                                    wr.writerow(forTemp[sym])
+
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                     wr.writerow(forTemp[sym])
