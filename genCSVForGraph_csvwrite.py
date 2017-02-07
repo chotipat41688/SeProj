@@ -3,15 +3,17 @@ import csv
 import time
 from datetime import datetime, timedelta
 
-symbols = ["JAS","JAS-W3","DTAC"]
+# symbols = ["JAS","JAS-W3","DTAC"]
+# items = ["2017-01-24","2017-01-25"]
+
+
 
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
-
-items = ["2017-01-24","2017-01-25"]
 # items= ["Sample"]
-
+symbols = ["OTO","IVL-W1","HPT"]
+items = ["2017-01-24","2017-01-25"]
 
 
 def getFreefloat():
@@ -46,7 +48,7 @@ def getDate(Date):
 
 def Timestamp2Datetime(Timestamp):
     Datetime = datetime.fromtimestamp(Timestamp-25200).strftime('%Y-%m-%d-%H-%M-%S')
-    print Datetime
+    # print Datetime
     return Datetime
 
 def Datetime2Timestamp(dt, epoch=datetime(1970,1,1)):
@@ -73,6 +75,63 @@ def checkTimestamp(Timestamp,symbol):
     else:
         tempTimestamp[symbol] = Timestamp
         return Timestamp,0
+
+
+
+
+
+
+
+
+
+
+def getSpread(x):
+    ''' x<2         0.01    0
+        2<=x<5       0.02    1
+        5<=x<10      0.05    2
+        10<=x<25     0.1     3
+        25<=x<100    0.25    4
+        100<=x<200   0.5     5
+        200<=x<400   1.0     6
+        x>=400       2.0     7
+    '''
+    if x < 200:
+        return 0, 1, 200
+    elif 200 <= x < 500:
+        return 1, .5, 500
+    elif 500 <= x < 1000:
+        return 2, .2, 1000
+    elif 1000 <= x < 2500:
+        return 3, .1, 2500
+    elif 2500 <= x < 10000:
+        return 4, .04, 10000
+    elif 10000 <= x < 20000:
+        return 5, .02, 20000
+    elif 20000 <= x < 40000:
+        return 6, .01, 40000
+    else:
+        return 7, .005, 40000
+
+def getDifSpread(x1, x2):
+    a1, t1, z1 = getSpread(x1)
+    a2, t2, z2 = getSpread(x2)
+    if a1 == a2:
+        Dif = (x2 - x1) * t1
+    elif a2 > a1:
+        Dif = ((x2 - z1) * t2) + ((z1 - x1) * t1)
+    else:
+        Dif = -(((x1 - z2) * t1) + ((z2 - x2) * t2))
+    return int(Dif)
+
+
+
+
+
+
+
+
+
+
 
 
 t0 = time.time()
@@ -104,7 +163,10 @@ sellVol = dict()
 auctVol = dict()
 
 gain = dict()
+spread = dict()
 count100k = dict()
+
+tf30 = dict()
 
 
 
@@ -134,7 +196,9 @@ for symbol in symbols:
     auctVol[symbol] = 0
 
     gain[symbol] = 0
+    spread[symbol] = 0
     count100k[symbol] = 0
+    tf30[symbol] = 0
 
 
 for symbol in symbols:
@@ -209,7 +273,7 @@ for Date in items:
                                     marketStatus[sym] = 1   #Open
                                     clearNoise[sym] = Timestamp[0]
 
-                                    if HH == 16:
+                                    if HH == 16 and mm >30:
                                         marketStatus[sym] = 4   #Pre-Close
                                 else:
                                     marketStatus[sym] = 5
@@ -244,6 +308,12 @@ for Date in items:
                                 Timestamp = Datetime2Timestamp(datetime(YYYY, MM, DD, HH, mm, SS))  ###
                                 Timestamp = checkTimestamp(Timestamp,sym)
 
+                                tempY, tempM, tempD, HH, mm, SS = getDate(Timestamp2Datetime(Timestamp[0]))
+                                HH = int(HH)
+                                mm = int(mm)
+                                SS = int(SS)
+
+
                                 ids = jsonDecoded["id"]  ##identify number of stock
                                 idSymbol[sym] = ids
 
@@ -267,15 +337,45 @@ for Date in items:
 
                                 if marketStatus[sym] == 1:
                                     gain[sym] = bidOffer[0] - prior[sym]
+                                    spread[sym] = getDifSpread(prior[sym],bidOffer[0])
 
-
+                                    if HH < 10:
+                                        tf30[sym] = 0
+                                    elif HH == 10 and mm < 30:
+                                        tf30[sym] = 1
+                                    elif HH == 10 and mm >= 30:
+                                        tf30[sym] = 2
+                                    elif HH == 11 and mm < 30:
+                                        tf30[sym] = 3
+                                    elif HH == 11 and mm >= 30:
+                                        tf30[sym] = 4
+                                    elif HH == 12 and mm <= 30:
+                                        tf30[sym] = 5
+                                    elif HH == 14 and mm < 30:
+                                        tf30[sym] = 6
+                                    elif HH == 14 and mm >= 30:
+                                        tf30[sym] = 7
+                                    elif HH == 15 and mm < 30:
+                                        tf30[sym] = 8
+                                    elif HH == 15 and mm >= 30:
+                                        tf30[sym] = 9
+                                    elif HH == 16 and mm <= 30:
+                                        tf30[sym] = 10
 
                                 # a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
 
-                                forTemp[sym] = [Date] + [tim] + [idSymbol[sym]] + [marketStatus[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side] + bidOffer + \
+                                # forTemp[sym] = [Date] + [tim] + [idSymbol[sym]] + [marketStatus[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side] + bidOffer + \
+                                #                [volATO[sym]] + [sumOrder[sym]] + [countOrder[sym]] + \
+                                #                [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
+                                #                [gain[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
+
+                                forTemp[sym] = [tf30[sym]] + [Date] + [tim] + [idSymbol[sym]]  + [Timestamp[0]] + [Timestamp[1]] + [side] + bidOffer + \
                                                [volATO[sym]] + [sumOrder[sym]] + [countOrder[sym]] + \
-                                               [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
-                                               [gain[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
+                                               [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [
+                                                   lowPrice[sym]] + [avgPrice[sym]] + \
+                                               [gain[sym]] + [spread[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [
+                                                   auctVol[sym]]
+
 
                                 if clearNoise[sym] == Timestamp[0]:
                                     continue
