@@ -2,6 +2,9 @@ import json
 import csv
 import time
 from datetime import datetime, timedelta
+from numpy import array
+import numpy as np
+
 
 # symbols = ["JAS","JAS-W3","DTAC"]
 # items = ["2017-01-24","2017-01-25"]
@@ -12,8 +15,8 @@ from datetime import datetime, timedelta
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
 
 # items= ["Sample"]
-symbols = ["OTO","IVL-W1","HPT"]
-items = ["2017-01-24","2017-01-25"]
+symbols = ["OTO","IVL-W1","HPT","AMANAH"]
+items = ["2017-02-14"]
 
 
 def getFreefloat():
@@ -68,13 +71,15 @@ def toTemp(price, vol, eve, symbol):
         tempOffVol[symbol] = [sumVO]
         return tempBid[symbol] + price + vol + tempBidVol[symbol] + tempOffVol[symbol]
 
-
-def checkTimestamp(Timestamp,symbol):
-    if(Timestamp < tempTimestamp[symbol]):
-        return tempTimestamp[symbol],1
+def checkTimestamp(timestamp,symbol):
+    if timestamp < tempTimestamp[symbol]:
+        tempMs[symbol] = 0
+        return tempTimestamp[symbol],tempMs[symbol],1
     else:
-        tempTimestamp[symbol] = Timestamp
-        return Timestamp,0
+        tempTimestamp[symbol] = timestamp
+        if timestamp == tempTimestamp[symbol]:
+            tempMs[symbol] += 1
+        return timestamp,tempMs[symbol],0
 
 
 
@@ -145,6 +150,7 @@ tempAll = dict()
 priATO = dict()
 volATO = dict()
 tempTimestamp = dict()
+tempMs = dict()
 marketStatus = dict()
 forTemp = dict()
 clearNoise = dict()
@@ -162,7 +168,7 @@ buyVol = dict()
 sellVol = dict()
 auctVol = dict()
 
-gain = dict()
+# gain = dict()
 spread = dict()
 count100k = dict()
 
@@ -178,6 +184,7 @@ for symbol in symbols:
     priATO[symbol] = 0
     volATO[symbol] = 0
     tempTimestamp[symbol] = 0
+    tempMs[symbol] = 0
     marketStatus[symbol] = 0
     clearNoise[symbol] = 0
     idSymbol[symbol] = 0
@@ -195,7 +202,7 @@ for symbol in symbols:
     sellVol[symbol] = 0
     auctVol[symbol] = 0
 
-    gain[symbol] = 0
+    # gain[symbol] = 0
     spread[symbol] = 0
     count100k[symbol] = 0
     tf30[symbol] = 0
@@ -336,7 +343,7 @@ for Date in items:
                                     bidOffer[10] = priATO[sym]
 
                                 if marketStatus[sym] == 1:
-                                    gain[sym] = bidOffer[0] - prior[sym]
+                                    # gain[sym] = bidOffer[0] - prior[sym]
                                     spread[sym] = getDifSpread(prior[sym],bidOffer[0])
 
                                     if HH < 10:
@@ -362,6 +369,8 @@ for Date in items:
                                     elif HH == 16 and mm <= 30:
                                         tf30[sym] = 10
 
+
+
                                 # a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
 
                                 # forTemp[sym] = [Date] + [tim] + [idSymbol[sym]] + [marketStatus[sym]] + [Timestamp[0]]+ [Timestamp[1]] + [side] + bidOffer + \
@@ -369,12 +378,10 @@ for Date in items:
                                 #                [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
                                 #                [gain[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
-                                forTemp[sym] = [tf30[sym]] + [Date] + [tim] + [idSymbol[sym]]  + [Timestamp[0]] + [Timestamp[1]] + [side] + bidOffer + \
-                                               [volATO[sym]] + [sumOrder[sym]] + [countOrder[sym]] + \
-                                               [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [
-                                                   lowPrice[sym]] + [avgPrice[sym]] + \
-                                               [gain[sym]] + [spread[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [
-                                                   auctVol[sym]]
+                                forTemp[sym] = [tf30[sym]] + [Date] + [tim] + [HH] + [mm] + [SS] + [tempMs[sym]] + [idSymbol[sym]]  + [Timestamp[0]] + [Timestamp[1]] + bidOffer + \
+                                               [side] + [sumOrder[sym]] + [countOrder[sym]] + \
+                                               [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
+                                               [spread[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
 
                                 if clearNoise[sym] == Timestamp[0]:
@@ -388,9 +395,14 @@ for Date in items:
                                     wr = csv.writer(ref_files2[symbols.index(sym)], lineterminator='\n')
                                     wr.writerow(forTemp[sym])
 
+                                    # np.array(forTemp[sym]).dump(open('array2.npy', 'wb'))
+
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                     wr.writerow(forTemp[sym])
+
+                                    # np.array(forTemp[sym]).dump(open('array.npy', 'wb'))
+
                                     sumOrder[sym] = 0
                                     countOrder[sym] = 0
 
