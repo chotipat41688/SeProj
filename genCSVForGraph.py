@@ -59,27 +59,73 @@ def Datetime2Timestamp(dt, epoch=datetime(1970,1,1)):
     # return td.total_seconds()
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) // 10**6
 
+
 def toTemp(price, vol, eve, symbol):
     sumVO = getSumVol(vol)
+    compareBid1[symbol] = tempBid[symbol][5]
+    compareOff1[symbol] = tempOffer[symbol][5]
+
 
     if eve == 1:
+
         tempBid[symbol] = price + vol
-        tempBidVol[symbol] = [sumVO]
-        return price + vol + tempOffer[symbol] + tempBidVol[symbol] + tempOffVol[symbol]
+
+        difBO[symbol] = sumVO - tempBidVol[symbol]
+
+        if difBO[symbol] <= -1000000:
+            volBO[symbol] = -4
+        elif -1000000 < difBO[symbol] <= -500000:
+            volBO[symbol] = -3
+        elif -500000 < difBO[symbol] <= -100000:
+            volBO[symbol] = -2
+        elif -100000 < difBO[symbol] <= -100:
+            volBO[symbol] = -1
+        elif -100 < difBO[symbol] <= 100000:
+            volBO[symbol] = 1
+        elif 100000 < difBO[symbol] <= 500000:
+            volBO[symbol] = 2
+        elif 500000 < difBO[symbol] <= -1000000:
+            volBO[symbol] = 3
+        elif difBO[symbol] > 1000000:
+            volBO[symbol] = 4
+
+
+        tempBidVol[symbol] = sumVO
+        return price + vol + tempOffer[symbol] + [tempBidVol[symbol]] + [tempOffVol[symbol]]
     else:
+
         tempOffer[symbol] = price + vol
-        tempOffVol[symbol] = [sumVO]
-        return tempBid[symbol] + price + vol + tempBidVol[symbol] + tempOffVol[symbol]
+
+        difBO[symbol] = sumVO - tempOffVol[symbol]
+
+        if difBO[symbol] <= -1000000:
+            volBO[symbol] = -40
+        elif -1000000 < difBO[symbol] <= -500000:
+            volBO[symbol] = -30
+        elif -500000 < difBO[symbol] <= -100000:
+            volBO[symbol] = -20
+        elif -100000 < difBO[symbol] <= -100:
+            volBO[symbol] = -10
+        elif -100 < difBO[symbol] <= 100000:
+            volBO[symbol] = 10
+        elif 100000 < difBO[symbol] <= 500000:
+            volBO[symbol] = 20
+        elif 500000 < difBO[symbol] <= -1000000:
+            volBO[symbol] = 30
+        elif difBO[symbol] > 1000000:
+            volBO[symbol] = 40
+
+        tempOffVol[symbol] = sumVO
+        return tempBid[symbol] + price + vol + [tempBidVol[symbol]] + [tempOffVol[symbol]]
+
+
 
 def checkTimestamp(timestamp,symbol):
     if timestamp < tempTimestamp[symbol]:
-        tempMs[symbol] = 0
-        return tempTimestamp[symbol],tempMs[symbol],1
+        return tempTimestamp[symbol],1
     else:
         tempTimestamp[symbol] = timestamp
-        if timestamp == tempTimestamp[symbol]:
-            tempMs[symbol] += 1
-        return timestamp,tempMs[symbol],0
+        return timestamp,0
 
 
 
@@ -150,7 +196,6 @@ tempAll = dict()
 priATO = dict()
 volATO = dict()
 tempTimestamp = dict()
-tempMs = dict()
 marketStatus = dict()
 forTemp = dict()
 clearNoise = dict()
@@ -170,8 +215,13 @@ auctVol = dict()
 
 spread = dict()
 count100k = dict()
+difBO = dict()
 
 tf30 = dict()
+volBO = dict()
+typeBO = dict()
+compareBid1 = dict()
+compareOff1 = dict()
 
 
 
@@ -183,7 +233,6 @@ for symbol in symbols:
     priATO[symbol] = 0
     volATO[symbol] = 0
     tempTimestamp[symbol] = 0
-    tempMs[symbol] = 0
     marketStatus[symbol] = 0
     clearNoise[symbol] = 0
     idSymbol[symbol] = 0
@@ -203,13 +252,22 @@ for symbol in symbols:
 
     spread[symbol] = 0
     count100k[symbol] = 0
+    difBO[symbol] =0
     tf30[symbol] = 0
+    volBO[symbol] = 0
+    typeBO[symbol] = 0
+
+    tempBidVol[symbol] = 0
+    tempOffVol[symbol] = 0
+    compareBid1[symbol] = 0
+    compareOff1[symbol] = 0
 
 
 for symbol in symbols:
-    tempBidVol[symbol] = []
-    tempOffVol[symbol] = []
     forTemp[symbol] = []
+    # tempBidVol[symbol] = []
+    # tempOffVol[symbol] = []
+
 
 ref_files = [open("TESTWRITE\\List\\" + Symbol + ".csv", "a") for Symbol in symbols]
 ref_files2 = [open("TESTWRITE\\Listato\\" + Symbol + ".csv", "a") for Symbol in symbols]
@@ -319,6 +377,7 @@ for Date in items:
                                 SS = int(SS)
 
 
+
                                 ids = jsonDecoded["id"]  ##identify number of stock
                                 idSymbol[sym] = ids
 
@@ -367,6 +426,31 @@ for Date in items:
                                         tf30[sym] = 10
 
 
+                                # if side == 1:   #B(Bid)=1, S(Offer)=0
+                                #     if sumOrder[sym] == 0:
+                                #         if bidOffer[5] != tempBid[sym][5]:
+                                #             typeBO = 0
+                                #         else:
+                                #
+                                # if bidOffer[15] != tempOffer[sym][5]:
+                                if sumOrder[sym] != 0:
+                                    volBO[sym] = sumOrder[sym]
+                                    # typeBO[sym] = side
+                                    if side == 1:
+                                        typeBO[sym] = 'Sell'
+                                    else:
+                                        typeBO[sym] = 'Buy'
+                                else:
+                                    if side == 1:
+                                        if compareBid1[sym] == bidOffer[5]:
+                                            typeBO[sym] = 'Bid Not slot 0'
+                                        else:
+                                            typeBO[sym] = 'Bid is slot 0'
+                                    else:
+                                        if compareOff1[sym] == bidOffer[15]:
+                                            typeBO[sym] = 'Offer Not slot 0'
+                                        else:
+                                            typeBO[sym] = 'Offer is slot 0'
 
                                 # a = [marketStatus[sym]] + [id] + [Timestamp[0]]+ [Timestamp[1]] + [side]+ [Date] + [tim] + bidOffer
 
@@ -375,8 +459,8 @@ for Date in items:
                                 #                [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
                                 #                [gain[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
-                                forTemp[sym] = [tf30[sym]] + [Date] + [tim] + [HH] + [mm] + [SS] + [tempMs[sym]] + [idSymbol[sym]]  + [Timestamp[0]] + [Timestamp[1]] + bidOffer + \
-                                               [side] + [sumOrder[sym]] + [countOrder[sym]] + \
+                                forTemp[sym] = [tf30[sym]] + [Date] + [tim] + [HH] + [mm] + [SS] + [idSymbol[sym]]  + [Timestamp[0]] + [Timestamp[1]] + bidOffer + \
+                                               [difBO[sym]] + [volBO[sym]] + [typeBO[sym]] + [compareOff1[sym]] + [bidOffer[15]] + [side] + [sumOrder[sym]] + [countOrder[sym]] + \
                                                [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
                                                [spread[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
