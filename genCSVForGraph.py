@@ -16,7 +16,7 @@ import numpy as np
 
 # items= ["Sample"]
 symbols = ["OTO","IVL-W1","HPT","AMANAH"]
-items = ["2017-02-14"]
+items = ["2017-02-14","2017-02-15"]
 
 
 def getFreefloat():
@@ -88,7 +88,6 @@ def toTemp(price, vol, eve, symbol):
             volBO[symbol] = 3
         elif difBO[symbol] > 1000000:
             volBO[symbol] = 4
-
 
         tempBidVol[symbol] = sumVO
         return price + vol + tempOffer[symbol] + [tempBidVol[symbol]] + [tempOffVol[symbol]]
@@ -176,7 +175,13 @@ def getDifSpread(x1, x2):
 
 
 
+def calmoney(pbid0,pbid1,pbid2,pbid3,pbid4,vbid0,vbid1,vbid2,vbid3,vbid4):
 
+    money = ((pbid0*vbid0)+(pbid1*vbid1)+(pbid2*vbid2)+(pbid3*vbid3)+(pbid4*vbid4))/100
+    # print money
+
+
+    return money
 
 
 
@@ -224,10 +229,14 @@ compareBid1 = dict()
 compareOff1 = dict()
 
 
+allbidmoney = dict()
+
 
 for symbol in symbols:
-    tempBid[symbol] = [None, None, None, None, None, None, None, None, None, None]
-    tempOffer[symbol] = [None, None, None, None, None, None, None, None, None, None]
+    # tempBid[symbol] = [None, None, None, None, None, None, None, None, None, None]
+    # tempOffer[symbol] = [None, None, None, None, None, None, None, None, None, None]
+    tempBid[symbol] = [0,0,0,0,0,0,0,0,0,0]
+    tempOffer[symbol] = [0,0,0,0,0,0,0,0,0,0]
     # forTemp[symbol] = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
 
     priATO[symbol] = 0
@@ -261,6 +270,8 @@ for symbol in symbols:
     tempOffVol[symbol] = 0
     compareBid1[symbol] = 0
     compareOff1[symbol] = 0
+
+    allbidmoney[symbol] = 0
 
 
 for symbol in symbols:
@@ -394,6 +405,13 @@ for Date in items:
 
                                 bidOffer = toTemp(pri, vol, eve, sym)
 
+                                # allbidmoney[sym] = calmoney(price[0], price[1], price[2], price[3], price[4], vol[0],
+                                #                             vol[1], vol[2], vol[3], vol[4])
+                                allbidmoney[sym] = calmoney(bidOffer[0],bidOffer[1],bidOffer[2],bidOffer[3],bidOffer[4],bidOffer[5],bidOffer[6],bidOffer[7],bidOffer[8],bidOffer[9])
+
+
+
+
                                 if bidOffer[0] == 0 and marketStatus[sym] != 1:
                                     bidOffer[0] = priATO[sym]
                                 if bidOffer[10] == 0 and marketStatus[sym] != 1:
@@ -460,7 +478,7 @@ for Date in items:
                                 #                [gain[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
                                 forTemp[sym] = [tf30[sym]] + [Date] + [tim] + [HH] + [mm] + [SS] + [idSymbol[sym]]  + [Timestamp[0]] + [Timestamp[1]] + bidOffer + \
-                                               [difBO[sym]] + [volBO[sym]] + [typeBO[sym]] + [compareOff1[sym]] + [bidOffer[15]] + [side] + [sumOrder[sym]] + [countOrder[sym]] + \
+                                               [difBO[sym]] + [volBO[sym]] + [typeBO[sym]] + [allbidmoney[sym]] +[compareOff1[sym]] + [bidOffer[15]] + [side] + [sumOrder[sym]] + [countOrder[sym]] + \
                                                [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
                                                [spread[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
