@@ -5,19 +5,17 @@ from datetime import datetime, timedelta
 from numpy import array
 import numpy as np
 
+import MySQLdb
+db = MySQLdb.connect("localhost","root","Qwer41688","dballstock")
+cursor = db.cursor()
 
 # symbols = ["JAS","JAS-W3","DTAC"]
 # items = ["2017-01-24","2017-01-25"]
-
-
-
 # items= ["2016-12-09_FANCY_30"]
 # items= ["2016-12-09_FANCY_30","2016-10-13","2016-10-14","2016-11-11","2016-11-14","2016-11-15","2016-11-30","2016-12-14_30","2016-12-15_30"]
-
 # items= ["Sample"]
-symbols = ["OTO","IVL-W1","HPT","AMANAH"]
-items = ["2017-02-14","2017-02-15"]
-
+symbols = ["OTO", "HPT", "AMANAH"]
+items = ["2017-02-14", "2017-02-15"]
 
 def getFreefloat():
     allShare = 250000000  # ACAP
@@ -176,13 +174,8 @@ def getDifSpread(x1, x2):
 
 
 def calmoney(pbid0,pbid1,pbid2,pbid3,pbid4,vbid0,vbid1,vbid2,vbid3,vbid4):
-
     money = ((pbid0*vbid0)+(pbid1*vbid1)+(pbid2*vbid2)+(pbid3*vbid3)+(pbid4*vbid4))/100
-    # print money
-
-
     return money
-
 
 
 
@@ -230,6 +223,7 @@ compareOff1 = dict()
 
 
 allbidmoney = dict()
+sidetransac = dict()
 
 
 for symbol in symbols:
@@ -272,12 +266,11 @@ for symbol in symbols:
     compareOff1[symbol] = 0
 
     allbidmoney[symbol] = 0
+    sidetransac[symbol] = 0
 
 
 for symbol in symbols:
     forTemp[symbol] = []
-    # tempBidVol[symbol] = []
-    # tempOffVol[symbol] = []
 
 
 ref_files = [open("TESTWRITE\\List\\" + Symbol + ".csv", "a") for Symbol in symbols]
@@ -405,8 +398,7 @@ for Date in items:
 
                                 bidOffer = toTemp(pri, vol, eve, sym)
 
-                                # allbidmoney[sym] = calmoney(price[0], price[1], price[2], price[3], price[4], vol[0],
-                                #                             vol[1], vol[2], vol[3], vol[4])
+
                                 allbidmoney[sym] = calmoney(bidOffer[0],bidOffer[1],bidOffer[2],bidOffer[3],bidOffer[4],bidOffer[5],bidOffer[6],bidOffer[7],bidOffer[8],bidOffer[9])
 
 
@@ -454,7 +446,7 @@ for Date in items:
                                 if sumOrder[sym] != 0:
                                     volBO[sym] = sumOrder[sym]
                                     # typeBO[sym] = side
-                                    if side == 1:
+                                    if sidetransac[sym] == 0:
                                         typeBO[sym] = 'Sell'
                                     else:
                                         typeBO[sym] = 'Buy'
@@ -477,6 +469,8 @@ for Date in items:
                                 #                [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
                                 #                [gain[sym]] + [count100k[sym]] + [buyVol[sym]] + [sellVol[sym]] + [auctVol[sym]]
 
+
+
                                 forTemp[sym] = [tf30[sym]] + [Date] + [tim] + [HH] + [mm] + [SS] + [idSymbol[sym]]  + [Timestamp[0]] + [Timestamp[1]] + bidOffer + \
                                                [difBO[sym]] + [volBO[sym]] + [typeBO[sym]] + [allbidmoney[sym]] +[compareOff1[sym]] + [bidOffer[15]] + [side] + [sumOrder[sym]] + [countOrder[sym]] + \
                                                [tradeVol[sym]] + [lastPrice[sym]] + [prior[sym]] + [highPrice[sym]] + [lowPrice[sym]] + [avgPrice[sym]] + \
@@ -491,6 +485,7 @@ for Date in items:
                                 # if marketStatus[sym] == 4:
                                 if marketStatus[sym] != 1:  ##selective row when market opened only.
                                     # continue
+
                                     wr = csv.writer(ref_files2[symbols.index(sym)], lineterminator='\n')
                                     wr.writerow(forTemp[sym])
 
@@ -499,6 +494,17 @@ for Date in items:
                                 else:
                                     wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                     wr.writerow(forTemp[sym])
+
+                                    # sql = "INSERT INTO %s (hour,minute,second,timestamp,bid0,bid1,bid2,bid3,bid4) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (
+                                    #     sym, HH, mm, SS, Timestamp[0], bidOffer[0], bidOffer[1], bidOffer[2],
+                                    #     bidOffer[3], bidOffer[4])
+                                    #
+                                    # try:
+                                    #     cursor.execute(sql)
+                                    #     # db.commit()
+                                    # except Exception as e:
+                                    #     print e
+                                    #     db.rollback()
 
                                     # np.array(forTemp[sym]).dump(open('array.npy', 'wb'))
 
@@ -541,7 +547,7 @@ for Date in items:
                                 lowPrice[sym] = low
                                 avgPrice[sym] = avg
 
-                                eve = event(jsonDecoded["sid"]) + 2
+                                sidetransac[sym] = event(jsonDecoded["sid"])
 
                                 sumOrder[sym] += actVol
                                 countOrder[sym] += 1
@@ -555,8 +561,13 @@ for Date in items:
                                 # wr = csv.writer(ref_files[symbols.index(sym)], lineterminator='\n')
                                 # wr.writerow(a)
 
-t1 = time.time()
 
+        db.commit()
+# disconnect from server
+db.close()
+
+
+t1 = time.time()
 total = t1-t0
 
 print total
