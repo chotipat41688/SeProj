@@ -27,7 +27,8 @@ def check(list):
     else: return 1
 
 def getSumVol(list):
-    Sum = list[0] + list[1] + list[2] + list[3] + list[4]
+    # Sum = list[0] + list[1] + list[2] + list[3] + list[4]
+    Sum = np.sum(list)
     return Sum
 
 def event(eve):
